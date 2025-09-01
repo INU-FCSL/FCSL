@@ -1,4 +1,4 @@
-# pick_and_place_direct.py
+# pick_and_place_200mm.py
 import socket
 import rbpodo as rb
 import numpy as np
@@ -21,9 +21,11 @@ speed_override = 0.7
 robot.set_speed_bar(rc, speed_override)
 
 # ======= 관절 포즈 정의 (모두 상공 +200mm 접근자세) =======
-pose_pick_1  = np.array([-137.9, 20.71,  85.05, -4.27, 70.09, 0.0])
-pose_pick_2  = np.array([-184.40,  8.48, 98.64,  0.59, 73.38, 0.0])
-pose_pick_3  = np.array([ -85.03,  4.14,104.55,  0.34, 70.38, 0.0])
+pose_home   = np.array([-90.0, -45.0, 135.0, 0.0, 90.0, 0.0])
+
+pose_pick_1 = np.array([-137.9, 20.71, 85.05, -4.27, 70.09, 0.0])
+pose_pick_2 = np.array([-184.40,  8.48, 98.64,  0.59, 73.38, 0.0])
+pose_pick_3 = np.array([ -85.03,  4.14,104.55,  0.34, 70.38, 0.0])
 
 pose_place_1 = np.array([ 22.06, 15.17, 92.07, -2.13, 71.19, 0.0])
 pose_place_2 = np.array([ -8.27, 10.47, 97.21, -2.09, 75.03, 0.0])
@@ -32,16 +34,17 @@ pose_place_3 = np.array([ -5.60, -2.97,112.15, -5.19, 70.64, 0.0])
 pick_list  = [pose_pick_1,  pose_pick_2,  pose_pick_3]
 place_list = [pose_place_1, pose_place_2, pose_place_3]
 
-# ======= 타이밍 =======
+# ======= 타이밍(요청 반영) =======
 WAIT_PICK  = 1.5  # s (픽 접점에서 대기)
 WAIT_PLACE = 1.5  # s (플레이스 접점에서 대기)
+WAIT_HOME  = 3.0  # s (홈에서 대기)
 
 # ======= 수직 리프트(상하) 파라미터 =======
 # ※ REL_FRAME_INDEX는 반드시 실제로 +Z가 '위'인 프레임으로 맞춰야 합니다.
 REL_FRAME_INDEX = 2   # 예: 0=Base, 1=Tool, 2=User0 ... (환경에 맞게 확인)
 REL_SPEED = 350       # mm/s  (상대직교이동 속도)
 REL_ACC   = 350       # mm/s^2
-LIFT_DZ   = 200.0     # mm    (요청: 접근자세에서 200mm 내려갔다가 다시 200mm 상승)
+LIFT_DZ   = 200.0     # mm    (요청: 각 접근자세에서 200mm 내려갔다가 다시 200mm 상승)
 
 # ======= 소켓 연결 (move_l_rel 전송용) =======
 client_socket = None
@@ -97,7 +100,7 @@ def move_l_rel(dx, dy, dz, drx=0.0, dry=0.0, drz=0.0,
 def mmove_j(angles_j, speed_j=30, acceleration_j=30):
     """
     관절 공간 절대 이동(PTP). 접근자세 간 장거리 이송은 move_j로,
-    접점 근처는 수직 move_l_rel로만 접근/이탈.
+    접점 근처는 수직 move_l_rel로만 접근/이탈하여 충돌 위험을 낮춥니다.
     """
     print(f"[mmove_j] 이동 -> {angles_j}")
     robot.move_j(rc, angles_j, speed_j, acceleration_j)
@@ -105,37 +108,44 @@ def mmove_j(angles_j, speed_j=30, acceleration_j=30):
     robot.wait_for_move_started(rc, 5.0)
     robot.wait_for_move_finished(rc)
 
-def descend_wait_lift(wait_sec: float):
+def descend_and_wait_then_lift(wait_sec: float):
     """
     접근자세(상공)에서 200mm 하강 → 대기 → 200mm 상승.
     """
-    move_l_rel(0.0, 0.0, -LIFT_DZ)  # 하강(접점 도달)
-    time.sleep(wait_sec)            # 접점에서 대기
-    move_l_rel(0.0, 0.0, +LIFT_DZ)  # 상승(접근자세 복귀)
+    # 하강(접점 도달)
+    move_l_rel(0.0, 0.0, -LIFT_DZ)
+    time.sleep(wait_sec)
+    # 상승(접근자세 복귀)
+    move_l_rel(0.0, 0.0, +LIFT_DZ)
 
 # ======= 메인 로직 =======
 def main():
-    print("=== Pick&Place (Home 미경유 / 각 접근자세에서 ±200mm) 시작 ===")
+    print("=== Pick&Place (Approach pose에서 ±200mm 수직 접근/이탈) 시작 ===")
 
-    # 시작은 첫 Pick 접근자세로 바로 이동
-    mmove_j(pick_list[0], 30, 30)
+    # 시작: Home(상공 웨이포인트)으로 이동 후 3초 대기
+    mmove_j(pose_home, 30, 30)
+    time.sleep(WAIT_HOME)
 
+    # 사이클: (Pick_i 접근)→200mm 하강/대기/상승→Home 경유→(Place_i 접근)→하강/대기/상승→Home
     for i in range(3):
         print(f"\n--- {i+1}번째 사이클 ---")
 
-        # (A) Pick_i 접근자세에서 200mm 하강 → 대기 → 상승
-        if i > 0:
-            # i>0이면 이전 Place에서 바로 pick_i로 넘어온 상태일 수 있으므로
-            mmove_j(pick_list[i], 30, 30)
-        descend_wait_lift(WAIT_PICK)
+        # 1) Pick_i 접근(상공)으로 관절이동
+        mmove_j(pick_list[i], 30, 30)
+        # 2) 200mm 하강 → 대기 → 200mm 상승
+        descend_and_wait_then_lift(WAIT_PICK)
 
-        # (B) 곧바로 Place_i 접근자세로 관절이동
+        # 3) 상공에서 Home 경유(수평 장거리 이송은 관절 이송 + 상공에서만)
+        mmove_j(pose_home, 30, 30)
+
+        # 4) Place_i 접근(상공)으로 관절이동
         mmove_j(place_list[i], 30, 30)
+        # 5) 200mm 하강 → 대기 → 200mm 상승
+        descend_and_wait_then_lift(WAIT_PLACE)
 
-        # (C) Place_i 접근자세에서 200mm 하강 → 대기 → 상승
-        descend_wait_lift(WAIT_PLACE)
-
-        # (D) 다음 사이클로 바로 넘어감(홈 미경유)
+        # 6) 다음 사이클 전에 Home에서 3초 대기
+        mmove_j(pose_home, 30, 30)
+        time.sleep(WAIT_HOME)
 
     print("\n=== 모든 Pick&Place 완료 ===")
 
