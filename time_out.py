@@ -5,7 +5,7 @@ import numpy as np
 import time
 
 # ======= 연결/설정 =======
-ROBOT_IP = "192.168.0.22"
+ROBOT_IP = "192.168.50.60"
 SOCKET_PORT = 5000  # move_l_rel용 스크립트 서버 포트
 
 print(f"[INFO] 로봇에 연결 중... IP: {ROBOT_IP}")
@@ -23,13 +23,13 @@ robot.set_speed_bar(rc, speed_override)
 # ======= 관절 포즈 정의 (모두 상공 +200mm 접근자세) =======
 pose_home   = np.array([-90.0, -45.0, 135.0, 0.0, 90.0, 0.0])
 
-pose_pick_1  = np.array([-137.9, 20.71,  85.05, -4.27, 70.09, 0.0])
-pose_pick_2  = np.array([-184.40,  8.48, 98.64,  0.59, 73.38, 0.0])
-pose_pick_3  = np.array([ -85.03,  4.14,104.55,  0.34, 70.38, 0.0])
+pose_pick_1 = np.array([-180.0, 20.71,  85.05, -4.27, 70.09, 0.0])
+pose_pick_2 = np.array([-135.0,  8.48,  98.64,  0.59, 73.38, 0.0])
+pose_pick_3 = np.array([ -90.0,  4.14, 104.55,  0.34, 70.38, 0.0])
 
-pose_place_1 = np.array([ 22.06, 15.17, 92.07, -2.13, 71.19, 0.0])
-pose_place_2 = np.array([  8.27, 10.47, 97.21, -2.09, 75.03, 0.0])
-pose_place_3 = np.array([ -5.60, -2.97,112.15, -5.19, 70.64, 0.0])
+pose_place_1 = np.array([ 30.0, 15.17,  92.07, -2.13, 71.19, 0.0])
+pose_place_2 = np.array([-20.0, 10.47,  97.21, -2.09, 75.03, 0.0])
+pose_place_3 = np.array([ -60.0, -2.97,112.15, -5.19, 70.64, 0.0])
 
 pick_list  = [pose_pick_1,  pose_pick_2,  pose_pick_3]
 place_list = [pose_place_1, pose_place_2, pose_place_3]
