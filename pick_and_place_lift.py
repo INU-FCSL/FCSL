@@ -4,7 +4,7 @@ import numpy as np
 import time
 
 # ======= 설정 =======
-ROBOT_IP = "192.168.0.22"
+ROBOT_IP = "192.168.50.60"
 SOCKET_PORT = 5000  # 스크립트 서버 포트
 print(f"[INFO] 로봇에 연결 중... IP: {ROBOT_IP}")
 
