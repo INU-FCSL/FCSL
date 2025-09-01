@@ -3,7 +3,7 @@ import numpy as np
 import time
 
 # ======= 설정 부분 =======
-ROBOT_IP = "192.168.0.22"
+ROBOT_IP = "192.168.50.60"
 print(f"로봇에 연결 중... IP: {ROBOT_IP}")
 robot = rb.Cobot(ROBOT_IP)
 rc = rb.ResponseCollector()
