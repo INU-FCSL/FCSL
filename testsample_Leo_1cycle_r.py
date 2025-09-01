@@ -17,7 +17,7 @@ print("[INFO] 로봇 연결 성공.")
 robot.set_operation_mode(rc, rb.OperationMode.Real)
 
 # 전체 속도 오버라이드 (70%)
-speed_override = 0.7
+speed_override = 0.4
 robot.set_speed_bar(rc, speed_override)
 
 # ======= 좌표(절대 관절각) =======
@@ -27,9 +27,9 @@ pose_pick_1 = np.array([-137.9, 40.93, 93.73, -6.06, 41.3, 0.0])
 pose_pick_2 = np.array([-124.53, 34.26, 103.82, -6.29, 39.76, 0.0])
 pose_pick_3 = np.array([-101.92, 27.6, 117.61, 0.61, 29.61, 0.0])
 
-pose_place_1 = np.array([22.06, 36.91, 100.80, -3.06, 40.77, 0.0])
-pose_place_2 = np.array([8.27, 33.25, 106.40, -2.92, 43.08, 0.0])
-pose_place_3 = np.array([-5.6, 24.8, 121.52, -11.7, 32.91, 0.0])
+pose_place_1 = np.array([22.06, 15.17, 92.07, -2.13, 71.19, 0.0])
+pose_place_2 = np.array([8.27, 10.47, 97.21, -2.09, 75.03, 0.0])
+pose_place_3 = np.array([-5.6, -2.97, 112.15, -5.19, 70.64, 0.0])
 
 pick_list  = [pose_pick_1,  pose_pick_2,  pose_pick_3]
 place_list = [pose_place_1, pose_place_2, pose_place_3]
@@ -44,7 +44,7 @@ WAIT_HOME  = 3.0  # s (홈에서 대기)
 REL_FRAME_INDEX = 2
 REL_SPEED = 350     # mm/s (상대이동 속도)
 REL_ACC   = 350     # mm/s^2 (상대이동 가속도)
-LIFT_DZ   = 500.0   # mm  ← 요청에 따라 500mm로 상향
+LIFT_DZ   = 200.0   # mm  ← 요청에 따라 500mm로 상향
 
 # ======= 소켓 연결 (move_l_rel 전송용) =======
 client_socket = None
