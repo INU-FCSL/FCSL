@@ -141,4 +141,47 @@ def descend_and_wait_then_lift(wait_sec: float):
     """
     접근자세(상공)에서 200mm 하강 → 대기 → 200mm 상승.
     """
-    move_l_rel(0.0
+    move_l_rel(0.0, 0.0, -LIFT_DZ)  # 하강(접점 도달)
+    time.sleep(wait_sec)
+    move_l_rel(0.0, 0.0, +LIFT_DZ)  # 상승(접근자세 복귀)
+
+# ======= 메인 로직 =======
+def main():
+    print("=== Pick&Place (Approach pose에서 ±200mm 수직 접근/이탈, 타임아웃 보호) 시작 ===")
+
+    # 시작: Home(상공 웨이포인트)으로 이동 후 3초 대기
+    mmove_j(pose_home, 30, 30)
+    time.sleep(WAIT_HOME)
+
+    # 사이클: (Pick_i 접근)→200mm 하강/대기/상승→Home 경유→(Place_i 접근)→하강/대기/상승→Home
+    for i in range(3):
+        print(f"\n--- {i+1}번째 사이클 ---")
+
+        # 1) Pick_i 접근(상공)으로 관절이동
+        mmove_j(pick_list[i], 30, 30)
+        # 2) 200mm 하강 → 대기 → 200mm 상승
+        descend_and_wait_then_lift(WAIT_PICK)
+
+        # 3) 상공에서 Home 경유(수평 장거리 이송은 관절 이송 + 상공에서만)
+        mmove_j(pose_home, 30, 30)
+
+        # 4) Place_i 접근(상공)으로 관절이동
+        mmove_j(place_list[i], 30, 30)
+        # 5) 200mm 하강 → 대기 → 200mm 상승
+        descend_and_wait_then_lift(WAIT_PLACE)
+
+        # 6) 다음 사이클 전에 Home에서 3초 대기
+        mmove_j(pose_home, 30, 30)
+        time.sleep(WAIT_HOME)
+
+    print("\n=== 모든 Pick&Place 완료 ===")
+
+if __name__ == "__main__":
+    try:
+        main()
+    finally:
+        if client_socket is not None:
+            try:
+                client_socket.close()
+            except Exception:
+                pass
