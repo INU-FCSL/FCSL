@@ -26,7 +26,7 @@ pose_pick_2  = np.array([-184.40,  8.48, 98.64,  0.59, 73.38, 0.0])
 pose_pick_3  = np.array([ -85.03,  4.14,104.55,  0.34, 70.38, 0.0])
 
 pose_place_1 = np.array([ 22.06, 15.17, 92.07, -2.13, 71.19, 0.0])
-pose_place_2 = np.array([  8.27, 10.47, 97.21, -2.09, 75.03, 0.0])
+pose_place_2 = np.array([ -8.27, 10.47, 97.21, -2.09, 75.03, 0.0])
 pose_place_3 = np.array([ -5.60, -2.97,112.15, -5.19, 70.64, 0.0])
 
 pick_list  = [pose_pick_1,  pose_pick_2,  pose_pick_3]
